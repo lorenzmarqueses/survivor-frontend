@@ -2,6 +2,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import AlertMessage from "@/components/alert-message";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -17,7 +18,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <QueryClientProvider client={queryClient}>
-        <body className={`${inter.variable} antialiased`}>{children}</body>
+        <body className={`${inter.variable} antialiased`}>
+          {/* Include AlertMessage component */}
+          <AlertMessage />
+          {children}
+        </body>
       </QueryClientProvider>
     </html>
   );
