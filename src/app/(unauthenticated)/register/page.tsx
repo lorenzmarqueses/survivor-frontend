@@ -9,42 +9,42 @@ import { useMutation } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { useRouter } from "next/navigation";
 
-interface LoginFormInputs {
+interface RegistrationFormInputs {
   email: string;
   password: string;
 }
 
-interface LoginResponse {
+interface RegistrationResponse {
   access_token: string;
 }
 
-const LoginPage: React.FC = () => {
+const RegistrationPage: React.FC = () => {
   const router = useRouter();
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormInputs>();
+  } = useForm<RegistrationFormInputs>();
 
   // React Query mutation using the apiClient
-  const loginMutation = useMutation({
-    mutationFn: async (data: LoginFormInputs) => {
-      return apiClient.post<LoginResponse>("/auth/login", data); // Replace with your API endpoint
+  const registrationMutation = useMutation({
+    mutationFn: async (data: RegistrationFormInputs) => {
+      return apiClient.post<RegistrationResponse>("/auth/register", data); // Replace with your API endpoint
     },
     onSuccess: (data) => {
-      console.log("Login successful:", data);
+      console.log("Registration successful:", data);
       document.cookie = `token=${data.access_token}; path=/;`;
       router.push("/report");
-      // Handle successful login (e.g., redirect to another page)
+      // Handle successful registration (e.g., redirect to login or dashboard)
     },
     onError: (error: any) => {
-      console.error("Login failed:", error.message || "Unknown error");
+      console.error("Registration failed:", error.message || "Unknown error");
       // Handle error (e.g., show error message)
     },
   });
 
-  const onSubmit: SubmitHandler<LoginFormInputs> = (data) => {
-    loginMutation.mutate(data);
+  const onSubmit: SubmitHandler<RegistrationFormInputs> = (data) => {
+    registrationMutation.mutate(data);
   };
 
   return (
@@ -53,8 +53,8 @@ const LoginPage: React.FC = () => {
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">Login</CardTitle>
-              <CardDescription>Enter your email below to login to your account</CardDescription>
+              <CardTitle className="text-2xl">Register</CardTitle>
+              <CardDescription>Create your account by entering your details below</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)}>
@@ -74,23 +74,32 @@ const LoginPage: React.FC = () => {
                     <Input
                       id="password"
                       type="password"
-                      {...register("password", { required: "Password is required" })}
+                      placeholder="Enter your password"
+                      {...register("password", {
+                        required: "Password is required",
+                        minLength: {
+                          value: 6,
+                          message: "Password must be at least 6 characters",
+                        },
+                      })}
                     />
                     {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
                   </div>
-                  <Button type="submit" className="w-full" disabled={loginMutation.status === "pending"}>
-                    {loginMutation.status === "pending" ? "Logging in..." : "Login"}
+                  <Button type="submit" className="w-full" disabled={registrationMutation.status === "pending"}>
+                    {registrationMutation.status === "pending" ? "Registering..." : "Register"}
                   </Button>
-                  {loginMutation.isError && (
+                  {registrationMutation.isError && (
                     <p className="text-red-500 text-sm mt-2">
-                      {loginMutation.error instanceof Error ? loginMutation.error.message : "An error occurred"}
+                      {registrationMutation.error instanceof Error
+                        ? registrationMutation.error.message
+                        : "An error occurred"}
                     </p>
                   )}
                 </div>
                 <div className="mt-4 text-center text-sm">
-                  Don&apos;t have an account?{" "}
-                  <a href="/register" className="underline underline-offset-4">
-                    Sign up
+                  Already have an account?{" "}
+                  <a href="/login" className="underline underline-offset-4">
+                    Login
                   </a>
                 </div>
               </form>
@@ -102,4 +111,4 @@ const LoginPage: React.FC = () => {
   );
 };
 
-export default LoginPage;
+export default RegistrationPage;
