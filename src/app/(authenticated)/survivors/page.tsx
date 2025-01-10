@@ -1,4 +1,5 @@
 "use client";
+import AddSurvivor from "@/components/add-survivor";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -66,10 +67,7 @@ const SurvivorsPage: React.FC = () => {
             <FaInfoCircle color="#5F5F61" />
           </div>
         </div>
-        <Button variant="ghost" className="border rounded-lg">
-          <FaPlusCircle className="mr-2" />
-          Add Survivor
-        </Button>
+        <AddSurvivor />
       </div>
       <div className="flex flex-col gap-10 mt-12">
         <Table>
