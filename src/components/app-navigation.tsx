@@ -13,6 +13,7 @@ import { navigationMenuTriggerStyle } from "./ui/navigation-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 const items = [
   {
@@ -32,8 +33,6 @@ const items = [
 const AppNavigation: React.FC = () => {
   const pathname = usePathname();
 
-  const activeNavCss = (href: string) => (pathname === href ? "bg-[#1F0D24]" : "");
-
   return (
     <NavigationMenu className="bg-[#3E1F47]">
       <NavigationMenuList className="flex justify-between py-4 max-w-[1200px] mx-auto">
@@ -52,7 +51,10 @@ const AppNavigation: React.FC = () => {
             </NavigationMenuItem>
           </div>
           {items.map((item) => (
-            <NavigationMenuItem key={item.name} className={`py-3 px-12 ${activeNavCss(item.href)}`}>
+            <NavigationMenuItem
+              key={item.name}
+              className={`py-3 px-12 ${cn(pathname === item.href ? "bg-[#1F0D24]" : "")}`}
+            >
               <NavigationMenuLink href={item.href} className="text-white text-sm">
                 {item.name}
               </NavigationMenuLink>
