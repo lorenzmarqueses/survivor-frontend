@@ -2,21 +2,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import useRegistrationMutation from "@/hooks/useRegistrationMutation";
+import { RegistrationFormInputs } from "@/types/auth";
 import { Label } from "@radix-ui/react-label";
-import React from "react";
-import { useForm, SubmitHandler } from "react-hook-form";
-import { useMutation } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
 import { useRouter } from "next/navigation";
-
-interface RegistrationFormInputs {
-  email: string;
-  password: string;
-}
-
-interface RegistrationResponse {
-  access_token: string;
-}
+import React from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
 
 const RegistrationPage: React.FC = () => {
   const router = useRouter();
@@ -26,22 +17,7 @@ const RegistrationPage: React.FC = () => {
     formState: { errors },
   } = useForm<RegistrationFormInputs>();
 
-  // React Query mutation using the apiClient
-  const registrationMutation = useMutation({
-    mutationFn: async (data: RegistrationFormInputs) => {
-      return apiClient.post<RegistrationResponse>("/auth/register", data); // Replace with your API endpoint
-    },
-    onSuccess: (data) => {
-      console.log("Registration successful:", data);
-      document.cookie = `token=${data.access_token}; path=/;`;
-      router.push("/report");
-      // Handle successful registration (e.g., redirect to login or dashboard)
-    },
-    onError: (error: any) => {
-      console.error("Registration failed:", error.message || "Unknown error");
-      // Handle error (e.g., show error message)
-    },
-  });
+  const registrationMutation = useRegistrationMutation();
 
   const onSubmit: SubmitHandler<RegistrationFormInputs> = (data) => {
     registrationMutation.mutate(data);

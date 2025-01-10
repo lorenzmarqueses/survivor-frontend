@@ -2,46 +2,20 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import useLoginMutation from "@/hooks/useLoginMutation";
+import { LoginFormInputs } from "@/types/auth";
 import { Label } from "@radix-ui/react-label";
 import React from "react";
-import { useForm, SubmitHandler } from "react-hook-form";
-import { useMutation } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
-import { useRouter } from "next/navigation";
-
-interface LoginFormInputs {
-  email: string;
-  password: string;
-}
-
-interface LoginResponse {
-  access_token: string;
-}
+import { SubmitHandler, useForm } from "react-hook-form";
 
 const LoginPage: React.FC = () => {
-  const router = useRouter();
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormInputs>();
 
-  // React Query mutation using the apiClient
-  const loginMutation = useMutation({
-    mutationFn: async (data: LoginFormInputs) => {
-      return apiClient.post<LoginResponse>("/auth/login", data); // Replace with your API endpoint
-    },
-    onSuccess: (data) => {
-      console.log("Login successful:", data);
-      document.cookie = `token=${data.access_token}; path=/;`;
-      router.push("/report");
-      // Handle successful login (e.g., redirect to another page)
-    },
-    onError: (error: any) => {
-      console.error("Login failed:", error.message || "Unknown error");
-      // Handle error (e.g., show error message)
-    },
-  });
+  const loginMutation = useLoginMutation();
 
   const onSubmit: SubmitHandler<LoginFormInputs> = (data) => {
     loginMutation.mutate(data);
