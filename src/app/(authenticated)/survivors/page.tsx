@@ -21,20 +21,25 @@ import {
   TableFooter,
   Table,
 } from "@/components/ui/table";
+import useFetchSurvivorsQuery from "@/hooks/useFetchSurvivorsQuery";
+import { convertToDateString } from "@/lib/utils";
 import React, { useState } from "react";
 import { FaArrowDown, FaArrowUp, FaInfoCircle, FaPlusCircle } from "react-icons/fa";
 import { TiArrowSortedDown, TiArrowSortedUp } from "react-icons/ti";
 
 const SurvivorsPage: React.FC = () => {
+  const [page, setPage] = useState(1); // Start on page 1
+  const [limit, setLimit] = useState(10); // Show 10 items per page
+
+  const { data: survivorsData, error, isLoading } = useFetchSurvivorsQuery(page, limit);
+
+  const survivors = survivorsData?.data.survivors || [];
+  const total = survivorsData?.total || 0;
+
+  const healthySurvivorsCount = survivorsData?.data.nonInfectedCount;
+
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [sortField, setSortField] = useState<string>("name");
-
-  // Updated data for survivors
-  const survivors = [
-    { name: "John Doe", healthStatus: "Healthy", survivalMethod: "Shooting", dateAdded: "2024-01-01" },
-    { name: "Jane Smith", healthStatus: "Injured", survivalMethod: "Medic", dateAdded: "2024-01-02" },
-    { name: "Bob Johnson", healthStatus: "Healthy", survivalMethod: "Raft", dateAdded: "2024-01-03" },
-  ];
 
   const handleSort = (field: string) => {
     const newSortOrder = sortField === field && sortOrder === "asc" ? "desc" : "asc";
@@ -42,20 +47,29 @@ const SurvivorsPage: React.FC = () => {
     setSortOrder(newSortOrder);
   };
 
-  const sortedSurvivors = [...survivors].sort((a, b) => {
-    if (sortField === "name") {
-      return sortOrder === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
-    } else if (sortField === "status") {
-      return sortOrder === "asc"
-        ? a.healthStatus.localeCompare(b.healthStatus)
-        : b.healthStatus.localeCompare(a.healthStatus);
-    } else if (sortField === "dateAdded") {
-      return sortOrder === "asc"
-        ? new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime()
-        : new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
+  const sortedSurvivors = survivors
+    ? [...survivors].sort((a, b) => {
+        if (sortField === "name") {
+          return sortOrder === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+        } else if (sortField === "status") {
+          return sortOrder === "asc"
+            ? Number(a.infected) - Number(b.infected)
+            : Number(b.infected) - Number(a.infected);
+        } else if (sortField === "dateAdded") {
+          return sortOrder === "asc"
+            ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
+        return 0;
+      })
+    : [];
+
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    if (newPage > 0 && newPage <= Math.ceil(total / limit)) {
+      setPage(newPage);
     }
-    return 0;
-  });
+  };
 
   return (
     <div>
@@ -63,11 +77,11 @@ const SurvivorsPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-semibold">List of Survivors</h1>
           <div className="inline-flex items-center gap-2">
-            <p>You have 1205 healthy survivors</p>
+            <p>You have {healthySurvivorsCount} healthy survivors</p>
             <FaInfoCircle color="#5F5F61" />
           </div>
         </div>
-        <AddSurvivor />
+        <AddSurvivor refetch={() => {}} />
       </div>
       <div className="flex flex-col gap-10 mt-12">
         <Table>
@@ -94,7 +108,7 @@ const SurvivorsPage: React.FC = () => {
           </TableHeader>
           <TableBody>
             {sortedSurvivors.map((survivor) => (
-              <TableRow className="m-4" key={survivor.name}>
+              <TableRow className="m-4" key={survivor.id}>
                 <TableCell className="inline-flex items-center gap-2 py-4 font-medium">
                   <Avatar className="border-2 border-white cursor-pointer">
                     <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
@@ -103,25 +117,38 @@ const SurvivorsPage: React.FC = () => {
                   {survivor.name}
                 </TableCell>
                 <TableCell className="py-4">
-                  <span className="bg-green-100 text-green-500 px-2 py-1 rounded-lg">{survivor.healthStatus}</span>
+                  {survivor.infected ? (
+                    <span className="bg-red-100 text-red-500 px-2 py-1 rounded-lg">• Infected</span>
+                  ) : (
+                    <span className="bg-green-100 text-green-500 px-2 py-1 rounded-lg">• Healthy</span>
+                  )}
                 </TableCell>
-                <TableCell className="py-4">{survivor.dateAdded}</TableCell>
+                <TableCell className="py-4">{convertToDateString(survivor.createdAt)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
         <div className="flex flex-row">
           <div className="w-[50%] py-4">
-            Showing <span className="font-semibold">1</span> to <span className="font-semibold">10</span> of{" "}
-            <span className="font-semibold">1205</span> Results
+            Showing <span className="font-semibold">{(page - 1) * limit + 1}</span> to{" "}
+            <span className="font-semibold">{Math.min(page * limit, total)}</span> of{" "}
+            <span className="font-semibold">{total}</span> Results
           </div>
           <Pagination className="justify-end">
             <PaginationContent>
               <PaginationItem>
-                <PaginationPrevious className="border" href="#" />
+                <PaginationPrevious
+                  className={`border ${page === 1 ? "opacity-50 cursor-none" : "cursor-pointer"}`}
+                  onClick={() => handlePageChange(page - 1)}
+                  aria-disabled={page === 1}
+                />
               </PaginationItem>
               <PaginationItem>
-                <PaginationNext className="border" href="#" />
+                <PaginationNext
+                  className={`border ${page * limit >= total ? "opacity-50 cursor-none" : "cursor-pointer"}`}
+                  onClick={() => handlePageChange(page + 1)}
+                  aria-disabled={page * limit >= total}
+                />
               </PaginationItem>
             </PaginationContent>
           </Pagination>
