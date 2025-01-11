@@ -12,7 +12,7 @@ export async function middleware(request: Request) {
     return NextResponse.redirect(new URL("/report", url));
   }
 
-  if (!cookie && url.pathname !== "/login") {
+  if (!cookie && url.pathname !== "/login" && url.pathname !== "/register") {
     // If the user is not authenticated, redirect to login page
     return NextResponse.redirect(new URL("/login", url));
   }
