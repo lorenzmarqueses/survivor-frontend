@@ -23,3 +23,12 @@ export interface FetchNonInfectedReport {
   infectedSurvivors: Survivor[];
   nonInfectedSurvivors: Survivor[];
 }
+export interface FetchAverageResourcesReportResponse {
+  data: FetchAverageResourcesReport[];
+}
+
+export interface FetchAverageResourcesReport {
+  resource: string;
+  average: number;
+  daysWorth: number;
+}

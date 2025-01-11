@@ -1,5 +1,6 @@
 "use client";
 import ReportCard from "@/components/report-card";
+import useFetchAverageResourceAllocationReportQuery from "@/hooks/useFetchAverageResourceAllocationReportQuery";
 import useFetchInfectedReportQuery from "@/hooks/useFetchInfectedReportQuery";
 import useFetchNonInfectedReportQuery from "@/hooks/useFetchNonInfectedReportQuery";
 import React from "react";
@@ -8,6 +9,9 @@ import { FaInfoCircle } from "react-icons/fa";
 const ReportPage: React.FC = () => {
   const { data: infectedReport } = useFetchInfectedReportQuery();
   const { data: nonInfectedReport } = useFetchNonInfectedReportQuery();
+  const { data: averageResourceAllocationReportData } = useFetchAverageResourceAllocationReportQuery();
+
+  const averageResourceAllocationReport = averageResourceAllocationReportData?.data;
 
   return (
     <div>
@@ -39,7 +43,21 @@ const ReportPage: React.FC = () => {
           link="/notifications"
           report={infectedReport?.report}
         />
-        <ReportCard title="Average Resource Allocation" value="Food" subtitle="10 days worth" link="/notifications" />
+        <ReportCard
+          title="Average Resource Allocation"
+          value={
+            averageResourceAllocationReport && averageResourceAllocationReport.length > 0
+              ? averageResourceAllocationReport[0].resource ?? ""
+              : ""
+          }
+          subtitle={
+            averageResourceAllocationReport && averageResourceAllocationReport.length > 0
+              ? `${averageResourceAllocationReport[0].daysWorth} days worth`
+              : ""
+          }
+          link="/notifications"
+          report={averageResourceAllocationReport}
+        />
       </div>
     </div>
   );

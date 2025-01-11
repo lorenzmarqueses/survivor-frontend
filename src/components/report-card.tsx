@@ -33,7 +33,7 @@ const ReportCard: React.FC<ReportCardProps> = ({ className, ...props }) => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(props.report));
     const downloadAnchorNode = document.createElement("a");
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "report.json");
+    downloadAnchorNode.setAttribute("download", `${props.title.toLowerCase().replace(" ", "-")}-report.json`);
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
