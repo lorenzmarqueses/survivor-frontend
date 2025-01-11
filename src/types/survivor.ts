@@ -1,5 +1,3 @@
-import exp from "constants";
-
 export interface AddSurvivorInputs {
   name: string;
   age: number;
@@ -12,7 +10,7 @@ export interface AddSurvivorInputs {
 export interface AddSurvivorResponse extends Survivor {}
 
 export interface Survivor {
-  id: string;
+  id: number;
   name: string;
   age: number;
   gender: string;

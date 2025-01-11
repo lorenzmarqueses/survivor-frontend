@@ -9,41 +9,28 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import useFetchItemsQuery from "@/hooks/useFetchItemsQuery";
+import useFetchSurvivorsInventoryQuery from "@/hooks/useFetchSurvivorsInventoryQuery";
 import React, { useState } from "react";
 import { FaInfoCircle } from "react-icons/fa";
 import { TiArrowSortedDown, TiArrowSortedUp } from "react-icons/ti";
 
 const InventoryPage: React.FC = () => {
+  const [page, setPage] = useState(1); // Start on page 1
+  const [limit, setLimit] = useState(10); // Show 10 items per page
+
+  const { data: survivorsInventoryData, error, isLoading, refetch } = useFetchSurvivorsInventoryQuery(page, limit);
+
+  const { data: itemsData } = useFetchItemsQuery();
+
+  const survivorsInventory = survivorsInventoryData?.data.survivorsInventory || [];
+
+  const inventoryCount = survivorsInventoryData?.data?.inventoriesCount || 0;
+
+  const total = survivorsInventoryData?.total || 0;
+
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [sortField, setSortField] = useState<string>("name");
-
-  // Updated data for survivors
-  const survivors = [
-    {
-      name: "John Doe",
-      inventories: [
-        { name: "Axe", quantity: 1 },
-        { name: "Rope", quantity: 5 },
-        { name: "Water", quantity: 10 },
-      ],
-    },
-    {
-      name: "Jane Smith",
-      inventories: [
-        { name: "Medicine", quantity: 2 },
-        { name: "Bandage", quantity: 3 },
-        { name: "Water", quantity: 5 },
-      ],
-    },
-    {
-      name: "Bob Johnson",
-      inventories: [
-        { name: "Food", quantity: 10 },
-        { name: "Water", quantity: 5 },
-        { name: "Rope", quantity: 2 },
-      ],
-    },
-  ];
 
   const handleSort = (field: string) => {
     const newSortOrder = sortField === field && sortOrder === "asc" ? "desc" : "asc";
@@ -51,24 +38,33 @@ const InventoryPage: React.FC = () => {
     setSortOrder(newSortOrder);
   };
 
-  const sortedSurvivors = [...survivors].sort((a, b) => {
-    if (sortField === "name") {
-      return sortOrder === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
-    } else if (sortField === "inventories") {
-      return sortOrder === "asc"
-        ? a.inventories.length - b.inventories.length
-        : b.inventories.length - a.inventories.length;
+  const sortedSurvivors = survivorsInventory
+    ? [...survivorsInventory].sort((a, b) => {
+        if (sortField === "name") {
+          return sortOrder === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+        } else if (sortField === "inventory") {
+          return sortOrder === "asc"
+            ? a.inventory.length - b.inventory.length
+            : b.inventory.length - a.inventory.length;
+        }
+        return 0;
+      })
+    : [];
+
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    if (newPage > 0 && newPage <= Math.ceil(total / limit)) {
+      setPage(newPage);
     }
-    return 0;
-  });
+  };
 
   return (
     <div>
       <div className="flex flex-row justify-between items-center mt-6">
         <div>
-          <h1 className="text-2xl font-semibold">List of Survivors Inventories</h1>
+          <h1 className="text-2xl font-semibold">List of Survivors inventory</h1>
           <div className="inline-flex items-center gap-2">
-            <p>You have 10,201 Inventories logged</p>
+            <p>You have {inventoryCount} inventory logged</p>
             <FaInfoCircle color="#5F5F61" />
           </div>
         </div>
@@ -82,10 +78,10 @@ const InventoryPage: React.FC = () => {
                   Name {sortField === "name" && (sortOrder === "asc" ? <TiArrowSortedUp /> : <TiArrowSortedDown />)}
                 </span>
               </TableHead>
-              <TableHead onClick={() => handleSort("inventories")}>
+              <TableHead onClick={() => handleSort("inventory")}>
                 <span className="inline-flex items-center gap-2">
-                  Inventories
-                  {sortField === "inventories" && (sortOrder === "asc" ? <TiArrowSortedUp /> : <TiArrowSortedDown />)}
+                  inventory
+                  {sortField === "inventory" && (sortOrder === "asc" ? <TiArrowSortedUp /> : <TiArrowSortedDown />)}
                 </span>
               </TableHead>
               <TableHead>
@@ -95,7 +91,7 @@ const InventoryPage: React.FC = () => {
           </TableHeader>
           <TableBody>
             {sortedSurvivors.map((survivor) => (
-              <TableRow className="m-4" key={survivor.name}>
+              <TableRow className="m-4" key={survivor.id}>
                 <TableCell className="inline-flex items-center gap-2 py-4 font-medium">
                   <Avatar className="border-2 border-white cursor-pointer">
                     <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
@@ -104,10 +100,12 @@ const InventoryPage: React.FC = () => {
                   {survivor.name}
                 </TableCell>
                 <TableCell className="py-4">
-                  {survivor.inventories.map((inventory) => `${inventory.quantity} ${inventory.name}`).join(", ")}
+                  {survivor.inventory?.length > 0
+                    ? survivor.inventory?.map((inventory) => `${inventory.quantity} ${inventory.item.name}`).join(", ")
+                    : "No inventory logged"}
                 </TableCell>
                 <TableCell className="py-4">
-                  <RequestItem />
+                  <RequestItem refetch={refetch} survivor={survivor} items={itemsData ?? []} />
                 </TableCell>
               </TableRow>
             ))}
@@ -115,16 +113,25 @@ const InventoryPage: React.FC = () => {
         </Table>
         <div className="flex flex-row">
           <div className="w-[50%] py-4">
-            Showing <span className="font-semibold">1</span> to <span className="font-semibold">10</span> of{" "}
-            <span className="font-semibold">1205</span> Results
+            Showing <span className="font-semibold">{(page - 1) * limit + 1}</span> to{" "}
+            <span className="font-semibold">{Math.min(page * limit, total)}</span> of{" "}
+            <span className="font-semibold">{total}</span> Results
           </div>
           <Pagination className="justify-end">
             <PaginationContent>
               <PaginationItem>
-                <PaginationPrevious className="border" href="#" />
+                <PaginationPrevious
+                  className={`border ${page === 1 ? "opacity-50 cursor-none" : "cursor-pointer"}`}
+                  onClick={() => handlePageChange(page - 1)}
+                  aria-disabled={page === 1}
+                />
               </PaginationItem>
               <PaginationItem>
-                <PaginationNext className="border" href="#" />
+                <PaginationNext
+                  className={`border ${page * limit >= total ? "opacity-50 cursor-none" : "cursor-pointer"}`}
+                  onClick={() => handlePageChange(page + 1)}
+                  aria-disabled={page * limit >= total}
+                />
               </PaginationItem>
             </PaginationContent>
           </Pagination>
