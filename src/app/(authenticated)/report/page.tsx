@@ -1,17 +1,26 @@
 "use client";
 import ReportCard from "@/components/report-card";
+import ReportResourceAllocationCard from "@/components/report-resource-allocation-card";
 import useFetchAverageResourceAllocationReportQuery from "@/hooks/useFetchAverageResourceAllocationReportQuery";
 import useFetchInfectedReportQuery from "@/hooks/useFetchInfectedReportQuery";
 import useFetchNonInfectedReportQuery from "@/hooks/useFetchNonInfectedReportQuery";
-import React from "react";
+import React, { useState } from "react";
 import { FaInfoCircle } from "react-icons/fa";
 
 const ReportPage: React.FC = () => {
+  const [resource, setResource] = useState<string>("WATER");
   const { data: infectedReport } = useFetchInfectedReportQuery();
   const { data: nonInfectedReport } = useFetchNonInfectedReportQuery();
   const { data: averageResourceAllocationReportData } = useFetchAverageResourceAllocationReportQuery();
 
   const averageResourceAllocationReport = averageResourceAllocationReportData?.data;
+  const selectedResource = averageResourceAllocationReport?.find((report) => report.resource === resource);
+
+  const onUpdate = (resource: string) => {
+    console.log(resource);
+
+    setResource(resource);
+  };
 
   return (
     <div>
@@ -43,18 +52,12 @@ const ReportPage: React.FC = () => {
           link="/notifications"
           report={infectedReport?.report}
         />
-        <ReportCard
+        <ReportResourceAllocationCard
+          onUpdate={onUpdate}
+          choices={averageResourceAllocationReport?.map((report) => report.resource) || []}
           title="Average Resource Allocation"
-          value={
-            averageResourceAllocationReport && averageResourceAllocationReport.length > 0
-              ? averageResourceAllocationReport[0].resource ?? ""
-              : ""
-          }
-          subtitle={
-            averageResourceAllocationReport && averageResourceAllocationReport.length > 0
-              ? `${averageResourceAllocationReport[0].daysWorth} days worth`
-              : ""
-          }
+          value={selectedResource ? selectedResource.resource.toString() : "0"}
+          subtitle={selectedResource ? `${selectedResource.daysWorth} days worth` : ""}
           link="/notifications"
           report={averageResourceAllocationReport}
         />
