@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 const useFetchItemsQuery = () => {
   return useQuery({
-    queryKey: ["items"], // Include page and limit in query key for cache invalidation
+    queryKey: ["items"],
     queryFn: async () => {
       const response = await apiClient.get<Item[]>(`/items`);
 
